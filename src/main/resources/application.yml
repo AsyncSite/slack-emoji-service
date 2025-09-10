@@ -68,10 +68,10 @@ spring:
       client:
         registration:
           slack:
-            client-id: ${SLACK_CLIENT_ID:your-slack-client-id}
-            client-secret: ${SLACK_CLIENT_SECRET:your-slack-client-secret}
+            client-id: 9494654010486.9498856782788
+            client-secret: 0c0f226daf5a4cf0a74350ef66be791b
             authorization-grant-type: authorization_code
-            redirect-uri: ${SLACK_REDIRECT_URI:http://localhost:8080/api/public/slack-emoji/v1/slack/callback}
+            redirect-uri: http://localhost:8080/api/public/slack-emoji/v1/slack/callback
             scope: emoji:read,emoji:write,team:read
         provider:
           slack:

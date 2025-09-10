@@ -232,9 +232,9 @@ jobs:
                 - SPRING_DATA_REDIS_HOST=asyncsite-redis
                 - SPRING_DATA_REDIS_PORT=6379
                 - SPRING_KAFKA_BOOTSTRAP_SERVERS=asyncsite-kafka:9092
-                - SLACK_CLIENT_ID=${{ secrets.SLACK_CLIENT_ID }}
-                - SLACK_CLIENT_SECRET=${{ secrets.SLACK_CLIENT_SECRET }}
-                - SLACK_REDIRECT_URI=https://api.asyncsite.com/api/slack-emoji/v1/slack/callback
+                - SLACK_CLIENT_ID=9494654010486.9498856782788
+                - SLACK_CLIENT_SECRET=0c0f226daf5a4cf0a74350ef66be791b
+                - SLACK_REDIRECT_URI=https://api.asyncsite.com/api/public/slack-emoji/v1/slack/callback
                 - JWT_SECRET=${{ secrets.JWT_SECRET }}
               volumes:
                 - slack-emoji-service-logs:/app/logs

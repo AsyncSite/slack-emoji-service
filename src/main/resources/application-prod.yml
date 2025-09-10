@@ -78,10 +78,10 @@ jwt:
 
 # Slack OAuth Configuration
 slack:
-  client-id: ${SLACK_CLIENT_ID:6852734604775.8212851571893}
-  client-secret: ${SLACK_CLIENT_SECRET:7e925e088b1ff53c4f09ef0b2a41a7d4}
-  redirect-uri: ${SLACK_REDIRECT_URI:https://api.asyncsite.com/api/public/slack-emoji/v1/slack/callback}
-  bot-token: ${SLACK_BOT_TOKEN:}
+  client-id: 9494654010486.9498856782788
+  client-secret: 0c0f226daf5a4cf0a74350ef66be791b
+  redirect-uri: https://api.asyncsite.com/api/public/slack-emoji/v1/slack/callback
+  bot-token: 
 
 # Logging configuration
 logging:
