@@ -72,7 +72,7 @@ spring:
             client-secret: 0c0f226daf5a4cf0a74350ef66be791b
             authorization-grant-type: authorization_code
             redirect-uri: http://localhost:8080/api/public/slack-emoji/v1/slack/callback
-            scope: emoji:read,emoji:write,team:read
+            scope: emoji:read,emoji:write,team:read,admin.emoji:write
         provider:
           slack:
             authorization-uri: https://slack.com/oauth/v2/authorize

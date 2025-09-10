@@ -37,7 +37,7 @@ public class SecurityConfig {
                     "/api/public/v1/slack/auth",
                     "/api/public/v1/slack/callback"
                 ).permitAll()
-                // Install endpoints (temporary public for testing)
+                // Install endpoints (requires session via gateway header)
                 .requestMatchers("/api/v1/install/**").permitAll()
                 .anyRequest().authenticated()
             );

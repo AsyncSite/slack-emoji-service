@@ -77,6 +77,9 @@ slack:
   client-secret: ${SLACK_CLIENT_SECRET:7e925e088b1ff53c4f09ef0b2a41a7d4}
   redirect-uri: ${SLACK_REDIRECT_URI:http://localhost:8080/api/public/slack-emoji/v1/slack/callback}
   bot-token: ${SLACK_BOT_TOKEN:}
+app:
+  frontend:
+    url: ${APP_FRONTEND_URL:http://localhost:3000}
 
 # Application Configuration
 app:

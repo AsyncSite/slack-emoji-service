@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,23 @@ public class InstallController {
             @RequestHeader(value = "X-Session-Id", required = false) String sessionId) {
         
         log.info("Starting installation for pack: {}", packId);
+
+        // Validate session
+        if (sessionId == null || sessionId.isBlank()) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("message", "missing session");
+            return ResponseEntity.status(401).body(err);
+        }
+        String sessionKey = "session:" + sessionId;
+        HashOperations<String, Object, Object> hash = redisTemplate.opsForHash();
+        Object accessToken = hash.get(sessionKey, "accessToken");
+        if (accessToken == null) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("message", "invalid session");
+            return ResponseEntity.status(401).body(err);
+        }
         
         // Generate job ID
         String jobId = UUID.randomUUID().toString();
@@ -37,17 +55,19 @@ public class InstallController {
         String jobKey = "install:job:" + jobId;
         Map<String, Object> jobData = new HashMap<>();
         jobData.put("packId", packId);
+        jobData.put("workspaceId", hash.get(sessionKey, "teamId"));
         jobData.put("status", "pending");
         jobData.put("progress", 0);
         jobData.put("total", 0);
         jobData.put("startedAt", System.currentTimeMillis());
+        jobData.put("sessionId", sessionId);
         
         // Store job data in Redis with 1 hour TTL
         redisTemplate.opsForHash().putAll(jobKey, jobData);
         redisTemplate.expire(jobKey, 1, TimeUnit.HOURS);
         
-        // TODO: Add job to processing queue
-        // TODO: Start worker to process installation
+        // Add job to processing queue (simple list for now)
+        redisTemplate.opsForList().leftPush("install:queue", jobId);
         
         Map<String, Object> response = new HashMap<>();
         response.put("jobId", jobId);
