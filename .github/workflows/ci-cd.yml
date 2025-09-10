@@ -228,7 +228,7 @@ jobs:
                 - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://asyncsite-eureka:8761/eureka/
                 - SPRING_DATASOURCE_URL=jdbc:mysql://asyncsite-mysql:3306/slackemojidb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf8&useUnicode=true&createDatabaseIfNotExist=true
                 - SPRING_DATASOURCE_USERNAME=root
-                - SPRING_DATASOURCE_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+                - SPRING_DATASOURCE_PASSWORD=asyncsite_root_2024!
                 - SPRING_DATA_REDIS_HOST=asyncsite-redis
                 - SPRING_DATA_REDIS_PORT=6379
                 - SPRING_KAFKA_BOOTSTRAP_SERVERS=asyncsite-kafka:9092
