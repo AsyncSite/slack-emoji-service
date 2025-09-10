@@ -1,4 +1,7 @@
 package com.asyncsite.slackemojiservice.slack.adapter.in.web;
+
+import com.asyncsite.slackemojiservice.slack.application.service.SlackOAuthService;
+import com.asyncsite.slackemojiservice.slack.application.service.dto.SlackOAuthAccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +25,7 @@ import java.util.UUID;
 @Tag(name = "Slack Authentication", description = "Slack OAuth flow endpoints")
 public class SlackAuthController {
     private final RedisTemplate<String, Object> redisTemplate;
+    private final SlackOAuthService slackOAuthService;
 
     @Value("${SLACK_CLIENT_ID:9494654010486.9498856782788}")
     private String clientId;
@@ -33,8 +37,10 @@ public class SlackAuthController {
     private String frontendUrl;
 
     private static final String SLACK_AUTH_URL = "https://slack.com/oauth/v2/authorize";
-    // Keep scopes minimal; include admin.emoji:write if enterprise is targeted
-    private static final String SCOPES = "emoji:read,emoji:write,team:read,admin.emoji:write";
+    // Bot scopes
+    private static final String SCOPES = "emoji:read,emoji:write,team:read";
+    // User scopes (required for admin.* endpoints)
+    private static final String USER_SCOPES = "admin.emoji:write";
 
     private static final Duration STATE_TTL = Duration.ofMinutes(5);
     private static final Duration SESSION_TTL = Duration.ofHours(24);
@@ -55,10 +61,13 @@ public class SlackAuthController {
 
         String encodedRedirectUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
         String encodedScopes = URLEncoder.encode(SCOPES, StandardCharsets.UTF_8);
-        String authUrl = String.format("%s?client_id=%s&scope=%s&redirect_uri=%s&state=%s",
+        String encodedUserScopes = URLEncoder.encode(USER_SCOPES, StandardCharsets.UTF_8);
+        String authUrl = String.format(
+            "%s?client_id=%s&scope=%s&user_scope=%s&redirect_uri=%s&state=%s",
             SLACK_AUTH_URL,
             clientId,
             encodedScopes,
+            encodedUserScopes,
             encodedRedirectUri,
             state
         );
@@ -98,12 +107,33 @@ public class SlackAuthController {
 
         log.info("Received OAuth callback with code for pack {}", packId);
 
+        // Exchange code for tokens
+        SlackOAuthAccessResponse tokenResponse;
+        try {
+            tokenResponse = slackOAuthService.exchangeCodeForAccessToken(code);
+        } catch (Exception e) {
+            log.error("Failed to exchange code for token", e);
+            httpResponse.sendRedirect(frontendUrl + "/oauth/callback?error=token_exchange_failed");
+            return;
+        }
+
+        if (tokenResponse == null || !Boolean.TRUE.equals(tokenResponse.getOk())) {
+            log.error("Slack token exchange returned error: {}", tokenResponse != null ? tokenResponse.getError() : "null");
+            httpResponse.sendRedirect(frontendUrl + "/oauth/callback?error=token_exchange_error");
+            return;
+        }
+
         String sessionId = UUID.randomUUID().toString();
         String sessionKey = buildSessionKey(sessionId);
-        // Mock token/session for now (real exchange is TODO)
-        redisTemplate.opsForHash().put(sessionKey, "accessToken", "mock-token");
-        redisTemplate.opsForHash().put(sessionKey, "teamId", "T-MOCK");
-        redisTemplate.opsForHash().put(sessionKey, "teamName", "Mock Team");
+        // Prefer user token for admin.emoji endpoints
+        String effectiveToken = tokenResponse.getAuthedUser() != null && tokenResponse.getAuthedUser().getAccessToken() != null
+                ? tokenResponse.getAuthedUser().getAccessToken()
+                : tokenResponse.getAccessToken();
+        redisTemplate.opsForHash().put(sessionKey, "accessToken", effectiveToken);
+        if (tokenResponse.getTeam() != null) {
+            redisTemplate.opsForHash().put(sessionKey, "teamId", tokenResponse.getTeam().getId());
+            redisTemplate.opsForHash().put(sessionKey, "teamName", tokenResponse.getTeam().getName());
+        }
         redisTemplate.opsForHash().put(sessionKey, "createdAt", String.valueOf(System.currentTimeMillis()));
         redisTemplate.expire(sessionKey, SESSION_TTL);
 
