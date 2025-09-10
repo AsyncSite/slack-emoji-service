@@ -24,6 +24,8 @@ public class SecurityConfig {
                 // Public endpoints (direct access)
                 .requestMatchers(
                     "/api/v1/health",
+                    "/api/public/health",
+                    "/api/public/v1/health",
                     "/api/v1/packs/**",
                     "/actuator/**",
                     "/swagger-ui/**",

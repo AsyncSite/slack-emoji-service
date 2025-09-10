@@ -83,7 +83,7 @@ public class PublicEmojiPackController {
     /**
      * Health check endpoint (public access)
      */
-    @GetMapping("/health")
+    @GetMapping({"/health", "/v1/health"})
     @Operation(summary = "Health check (public)")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Slack Emoji Service is healthy");
