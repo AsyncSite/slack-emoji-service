@@ -1,0 +1,149 @@
+server:
+  port: 13084
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: slack-emoji-service
+  
+  profiles:
+    active: local
+  
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/slackemojidb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:asyncsite_root_2024!}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        show_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 25
+          batch_versioned_data: true
+    open-in-view: false
+  
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: slack-emoji-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.asyncsite.*"
+  
+  security:
+    oauth2:
+      client:
+        registration:
+          slack:
+            client-id: ${SLACK_CLIENT_ID:your-slack-client-id}
+            client-secret: ${SLACK_CLIENT_SECRET:your-slack-client-secret}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${SLACK_REDIRECT_URI:http://localhost:8080/api/public/slack-emoji/v1/slack/callback}
+            scope: emoji:read,emoji:write,team:read
+        provider:
+          slack:
+            authorization-uri: https://slack.com/oauth/v2/authorize
+            token-uri: https://slack.com/api/oauth.v2.access
+            user-info-uri: https://slack.com/api/users.identity
+            user-name-attribute: id
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: ${HOSTNAME:localhost}
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    display-request-duration: true
+    groups-order: DESC
+    operations-sorter: alpha
+    tags-sorter: alpha
+
+logging:
+  level:
+    root: INFO
+    com.asyncsite.slackemojiservice: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Application specific properties
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-jwt-secret-key-here-minimum-256-bits}
+    expiration: 3600000 # 1 hour
+  slack:
+    api:
+      base-url: https://slack.com/api
+      rate-limit:
+        max-requests-per-minute: 20
+        backoff-multiplier: 2
+        max-backoff-seconds: 60
+  emoji:
+    max-file-size: 131072 # 128KB in bytes
+    allowed-formats: png,jpg,jpeg,gif
+    max-name-length: 50
+    batch-size: 10 # Install emojis in batches of 10

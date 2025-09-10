@@ -1,0 +1,35 @@
+services:
+  slack-emoji-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: asyncsite/slack-emoji-service:latest
+    container_name: asyncsite-slack-emoji-service
+    restart: unless-stopped
+    ports:
+      - "13084:13084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-local}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:-http://asyncsite-eureka:8761/eureka/}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://asyncsite-mysql:3306/slackemojidb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD:-asyncsite_root_2024!}
+      - SPRING_DATA_REDIS_HOST=${SPRING_DATA_REDIS_HOST:-asyncsite-redis}
+      - SPRING_DATA_REDIS_PORT=${SPRING_DATA_REDIS_PORT:-6379}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-asyncsite-kafka:9092}
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-key-here-minimum-256-bits}
+      - SLACK_CLIENT_ID=${SLACK_CLIENT_ID}
+      - SLACK_CLIENT_SECRET=${SLACK_CLIENT_SECRET}
+      - SLACK_REDIRECT_URI=${SLACK_REDIRECT_URI:-http://localhost:8080/api/public/slack-emoji/v1/slack/callback}
+    networks:
+      - asyncsite-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:13084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  asyncsite-network:
+    external: true

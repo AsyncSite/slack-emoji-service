@@ -1,0 +1,119 @@
+# application-prod.yml
+spring:
+  application:
+    name: slack-emoji-service
+  
+  # MySQL datasource configuration for production
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://asyncsite-mysql:3306/slackemojidb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf8&useUnicode=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:asyncsite_root_2024!}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  
+  # JPA configuration
+  jpa:
+    hibernate:
+      ddl-auto: update  # Use 'validate' in production
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: false
+        show_sql: false
+    open-in-view: false
+  
+  # Redis configuration
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:asyncsite-redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+  
+  # Kafka configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:asyncsite-kafka:9092}
+    consumer:
+      group-id: slack-emoji-service
+      auto-offset-reset: latest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# Server configuration
+server:
+  port: 13084
+  servlet:
+    context-path: /
+
+# Eureka client configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://asyncsite-eureka:8761/eureka/}
+    registry-fetch-interval-seconds: 10
+  instance:
+    hostname: slack-emoji-service
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+    metadata-map:
+      startup: ${random.int}  # Force re-registration on restart
+
+# JWT configuration
+jwt:
+  secret: ${JWT_SECRET:AsyncSite_JWT_Secret_Key_For_Production_2024_32_Characters_Long!}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600}    # 1 hour in seconds
+  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800} # 7 days in seconds
+
+# Slack OAuth Configuration
+slack:
+  client-id: ${SLACK_CLIENT_ID:6852734604775.8212851571893}
+  client-secret: ${SLACK_CLIENT_SECRET:7e925e088b1ff53c4f09ef0b2a41a7d4}
+  redirect-uri: ${SLACK_REDIRECT_URI:https://api.asyncsite.com/api/public/slack-emoji/v1/slack/callback}
+  bot-token: ${SLACK_BOT_TOKEN:}
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.asyncsite.slackemojiservice: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Actuator configuration for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+
+# Application Configuration
+app:
+  frontend:
+    url: ${FRONTEND_URL:https://slackdori.com}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://slackdori.com,https://api.asyncsite.com}

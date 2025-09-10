@@ -1,0 +1,86 @@
+# application-local.yml
+spring:
+  application:
+    name: slack-emoji-service
+  
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://asyncsite-mysql:3306/slackemojidb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf8&useUnicode=true&createDatabaseIfNotExist=true}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: asyncsite_root_2024!
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:asyncsite-redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:asyncsite-kafka:9092}
+    consumer:
+      group-id: slack-emoji-service
+      auto-offset-reset: latest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: 13084
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://asyncsite-eureka:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:AsyncSite_JWT_Secret_Key_For_Development_2024_32_Characters_Long!}
+  access-token-expiration: 3600
+  refresh-token-expiration: 604800
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.asyncsite.slackemojiservice: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+# Slack OAuth Configuration
+slack:
+  client-id: ${SLACK_CLIENT_ID:6852734604775.8212851571893}
+  client-secret: ${SLACK_CLIENT_SECRET:7e925e088b1ff53c4f09ef0b2a41a7d4}
+  redirect-uri: ${SLACK_REDIRECT_URI:http://localhost:8080/api/public/slack-emoji/v1/slack/callback}
+  bot-token: ${SLACK_BOT_TOKEN:}
+
+# Application Configuration
+app:
+  frontend:
+    url: ${APP_FRONTEND_URL:http://localhost:3000}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:8080,http://localhost:4000}

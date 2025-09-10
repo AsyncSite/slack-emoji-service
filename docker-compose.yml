@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  slack-emoji-service:
+    container_name: asyncsite-slack-emoji-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "13084:13084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://asyncsite-eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://asyncsite-mysql:3306/slackemojidb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: asyncsite_root_2024!
+      SPRING_DATA_REDIS_HOST: asyncsite-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: asyncsite-kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-key-here-minimum-256-bits}
+      SLACK_CLIENT_ID: ${SLACK_CLIENT_ID:-your-slack-client-id}
+      SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET:-your-slack-client-secret}
+      SLACK_REDIRECT_URI: ${SLACK_REDIRECT_URI:-http://localhost:13084/api/public/v1/slack/callback}
+    depends_on:
+      mysql-init:
+        condition: service_completed_successfully
+    networks:
+      - asyncsite-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:13084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  mysql-init:
+    image: mysql:8.0
+    container_name: asyncsite-mysql-init-slack-emoji
+    environment:
+      MYSQL_ROOT_PASSWORD: asyncsite_root_2024!
+    command: >
+      sh -c "
+      until mysql -h asyncsite-mysql -uroot -pasyncsite_root_2024! -e 'SELECT 1'; do
+        echo 'Waiting for MySQL to be ready...'
+        sleep 2
+      done
+      mysql -h asyncsite-mysql -uroot -pasyncsite_root_2024! -e 'CREATE DATABASE IF NOT EXISTS slackemojidb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
+      echo 'Database slackemojidb created or already exists'
+      "
+    networks:
+      - asyncsite-network
+
+networks:
+  asyncsite-network:
+    external: true
