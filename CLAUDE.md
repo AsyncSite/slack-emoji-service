@@ -59,10 +59,15 @@ SELECT COUNT(*) FROM installed_packs;
 
 ## 1. 프로젝트 개요
 
+> Scope Update (2025-09)
+> - 백엔드 설치 경로는 **Enterprise Grid + org-admin + `admin.emoji:write`** 환경에서만 유효합니다.
+> - 일반 워크스페이스(비‑엔터프라이즈)는 Chrome 확장 기반 클라이언트 설치기를 사용합니다. 백엔드는 필수 아님.
+> - 운영 서버는 당분간 내립니다. 로컬 빌드/개발 및 Enterprise 대응 용도로만 유지합니다.
+
 SlackDori 서비스의 백엔드로, Slack 워크스페이스에 이모지 팩을 한 번에 설치할 수 있게 해주는 마이크로서비스입니다. 
 Slack OAuth2와 Admin API를 활용하여 대량의 커스텀 이모지를 자동으로 추가합니다.
 
-**제공 기능:**
+**제공 기능 (Enterprise 전용 경로):**
 - Slack OAuth2 인증 및 워크스페이스 연동
 - 이모지 팩 관리 (CRUD)
 - 대량 이모지 설치 자동화
@@ -232,9 +237,11 @@ GET  /api/v1/install/history     - 설치 이력 조회
 
 ### 7.1. 필요한 OAuth Scopes
 ```
-emoji:read        - 기존 이모지 읽기
-emoji:write       - 새 이모지 추가
-team:read        - 워크스페이스 정보 읽기
+user_scope:
+  - admin.emoji:write (필수, Enterprise Grid + Org Admin)
+
+bot scope:
+  - 현재 기본 비활성. 필요 시 별도 협의 후 추가
 ```
 
 ### 7.2. Rate Limiting 대응

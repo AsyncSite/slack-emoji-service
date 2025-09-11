@@ -2,9 +2,14 @@
 
 One-click Slack emoji pack installation service backend for SlackDori.
 
+> Important
+> - Server-based emoji installation via Slack Admin API requires an Enterprise Grid organization and org-admin approval with `user_scope=admin.emoji:write`.
+> - For non‑enterprise workspaces, server-side installation is not supported by Slack. Use the Chrome Extension-based client installer instead (see frontend docs).
+> - Production server will be taken down for now. Keep this service for future Enterprise support and internal development only.
+
 ## 🎯 Overview
 
-This microservice handles:
+This microservice handles (Enterprise-only path):
 - Slack OAuth2 authentication
 - Emoji pack management (CRUD operations)
 - Bulk emoji installation to Slack workspaces
@@ -62,14 +67,14 @@ http://localhost:8084/swagger-ui.html
 - `GET /api/v1/packs/featured` - Get featured packs
 - `GET /api/v1/packs/category/{category}` - Get packs by category
 
-### Slack Integration
-- `GET /api/v1/slack/auth` - Start OAuth flow
+### Slack Integration (Enterprise only)
+- `GET /api/v1/slack/auth` - Start OAuth flow (requires user_scope=admin.emoji:write)
 - `GET /api/v1/slack/callback` - OAuth callback
 - `POST /api/v1/install/{packId}` - Install pack to workspace
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Environment Variables (note: client ID/secret may be hardcoded per directive)
 ```bash
 # Database
 SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/slackemojidb
@@ -80,9 +85,9 @@ SPRING_DATASOURCE_PASSWORD=asyncsite_root_2024!
 SPRING_DATA_REDIS_HOST=localhost
 SPRING_DATA_REDIS_PORT=6379
 
-# Slack OAuth
-SLACK_CLIENT_ID=your-client-id
-SLACK_CLIENT_SECRET=your-client-secret
+# Slack OAuth (Enterprise only)
+SLACK_CLIENT_ID=...  # hardcoded in config for now
+SLACK_CLIENT_SECRET=...  # hardcoded in config for now
 SLACK_REDIRECT_URI=http://localhost:8084/api/v1/slack/callback
 
 # JWT (shared with User Service)
@@ -131,7 +136,8 @@ docker logs -f asyncsite-slack-emoji-service
 
 ## 📚 Related Documentation
 
-- [CLAUDE.md](./CLAUDE.md) - Detailed development guidelines
+- [CLAUDE.md](./CLAUDE.md) - Detailed development guidelines (updated with Enterprise-only scope)
+- [docs/slack-emoji/BACKEND_SCOPE_AND_INSTALL_STRATEGY.md](./docs/slack-emoji/BACKEND_SCOPE_AND_INSTALL_STRATEGY.md)
 - [Slack API Docs](https://api.slack.com/)
 - [SlackDori Frontend](../web/slackdori-frontend/)
 
