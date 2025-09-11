@@ -37,8 +37,8 @@ public class SlackAuthController {
     private String frontendUrl;
 
     private static final String SLACK_AUTH_URL = "https://slack.com/oauth/v2/authorize";
-    // Bot scopes
-    private static final String SCOPES = "emoji:read,emoji:write,team:read";
+    // Bot scopes are omitted to avoid invalid_scope unless explicitly needed
+    private static final String SCOPES = "";
     // User scopes (required for admin.* endpoints)
     private static final String USER_SCOPES = "admin.emoji:write";
 
@@ -60,17 +60,29 @@ public class SlackAuthController {
         redisTemplate.expire(stateKey, STATE_TTL);
 
         String encodedRedirectUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
-        String encodedScopes = URLEncoder.encode(SCOPES, StandardCharsets.UTF_8);
         String encodedUserScopes = URLEncoder.encode(USER_SCOPES, StandardCharsets.UTF_8);
-        String authUrl = String.format(
-            "%s?client_id=%s&scope=%s&user_scope=%s&redirect_uri=%s&state=%s",
-            SLACK_AUTH_URL,
-            clientId,
-            encodedScopes,
-            encodedUserScopes,
-            encodedRedirectUri,
-            state
-        );
+        String authUrl;
+        if (SCOPES == null || SCOPES.isBlank()) {
+            authUrl = String.format(
+                "%s?client_id=%s&user_scope=%s&redirect_uri=%s&state=%s",
+                SLACK_AUTH_URL,
+                clientId,
+                encodedUserScopes,
+                encodedRedirectUri,
+                state
+            );
+        } else {
+            String encodedScopes = URLEncoder.encode(SCOPES, StandardCharsets.UTF_8);
+            authUrl = String.format(
+                "%s?client_id=%s&scope=%s&user_scope=%s&redirect_uri=%s&state=%s",
+                SLACK_AUTH_URL,
+                clientId,
+                encodedScopes,
+                encodedUserScopes,
+                encodedRedirectUri,
+                state
+            );
+        }
 
         log.info("Redirecting to Slack OAuth for packId: {}, URL: {}", packId, authUrl);
         response.sendRedirect(authUrl);
